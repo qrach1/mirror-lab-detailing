@@ -68,6 +68,8 @@ section{scroll-margin-top:96px}
 
 /* nav */
 .top{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:20;padding-top:12px}
+/* fade behind the floating nav so scrolled content does not show above or around it */
+.top::before{content:"";position:absolute;left:0;right:0;top:calc(-12px - env(safe-area-inset-top,0px));bottom:-22px;z-index:-1;pointer-events:none;background:linear-gradient(180deg,var(--bg) 62%,transparent)}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:18px;border-radius:999px;padding:7px 7px 7px 24px;animation:drop .7s cubic-bezier(.2,.7,.2,1) both}
 .brand{font:400 14px/1 var(--f-brand);letter-spacing:.08em;color:var(--fg);text-decoration:none;white-space:nowrap}
 .brand span{color:var(--gold-ink)}
@@ -265,7 +267,7 @@ h1 .l small{font:400 clamp(10px,.9vw,12.5px)/1 var(--f-body);letter-spacing:.55e
 
 .sum{position:sticky;top:104px;border-radius:28px;padding:24px}
 .sum .lbl{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
-.sum .total{display:flex;align-items:baseline;gap:8px;margin:12px 0 4px;font:300 clamp(34px,3.4vw,44px)/1 var(--f-display);font-variant-numeric:tabular-nums}
+.sum .total{display:flex;align-items:baseline;gap:8px;white-space:nowrap;margin:12px 0 4px;font:300 clamp(34px,3.4vw,44px)/1 var(--f-display);font-variant-numeric:tabular-nums}
 .sum .total em{font-style:normal;font-size:15px;color:var(--muted)}
 .sum .old{font-size:14px;color:var(--muted);text-decoration:line-through;min-height:21px}
 .sum ul{list-style:none;margin:18px 0;padding:16px 0 0;border-top:1px solid var(--line);display:grid;gap:10px;font-size:13.5px}
@@ -439,7 +441,11 @@ footer b{color:var(--fg);font-weight:500;font-variant-numeric:tabular-nums;white
   .steps .n{margin-bottom:14px}
   .item{gap:12px;padding:14px 2px}
   .item .pr{font-size:15px}
-  .sum .total{font-size:24px}
+  .sum .total{font-size:clamp(17px,5.2vw,22px);gap:5px}
+  .sum .total em{font-size:12px}
+  .sum{gap:2px 10px;padding:12px 10px 12px 16px;background:var(--bg-2)}
+  .sum .btn{padding:0 5px 0 14px;font-size:14px;gap:8px;--h:44px}
+  .sum .btn .arr{width:32px;height:32px}
   .sum .lbl{font-size:10.5px}
   .cbox .row{grid-template-columns:minmax(0,1fr)}
 }
