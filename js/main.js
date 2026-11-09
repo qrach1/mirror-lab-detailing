@@ -186,6 +186,27 @@
     renderTotal();
   }));
 
+  /* ---------- before / after: one gentle sweep the first time a real photo pair comes into view ---------- */
+  if (!reduce && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      const ba = e.target, inp = ba.querySelector('input');
+      const keys = [50, 22, 78, 50], t0 = performance.now() + 300, dur = 2200;
+      let touched = false; inp.addEventListener('pointerdown', () => { touched = true; }, { once: true });
+      const step = now => {
+        if (touched) return;
+        const t = Math.max(0, Math.min(1, (now - t0) / dur)), seg = Math.min(2, Math.floor(t * 3)), lt = t * 3 - seg;
+        const k = lt < .5 ? 2 * lt * lt : 1 - Math.pow(-2 * lt + 2, 2) / 2;
+        const v = keys[seg] + (keys[seg + 1] - keys[seg]) * k;
+        inp.value = v; ba.style.setProperty('--pos', v + '%');
+        if (t < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }), { threshold: .6 });
+    document.querySelectorAll('.ba.has-photo').forEach(b => io.observe(b));
+  }
+
   /* ---------- before / after sliders ---------- */
   document.querySelectorAll('.ba input').forEach(inp => {
     const ba = inp.closest('.ba');
