@@ -231,11 +231,11 @@
   const stage = $('stage'), cv = $('dirt'), ctx = cv.getContext('2d');
   const clean = $('clean'), dirty = $('dirtyImg'), brush = $('brush');
   const bar = $('bar'), pctEl = $('pct'), hint = $('hint'), hud = $('hud'), coupon = $('coupon');
-  const CIRC = 62.83, FINISH = 0.6;
+  const CIRC = 62.83, FINISH = 0.9; /* доля грязи, которую надо отмыть для скидки */
   const idle = coarse ? 'Отмойте машину пальцем и получите −10%' : 'Отмойте машину курсором и получите −10%';
   hint.textContent = idle;
 
-  const MW = 787, MH = 352, R = MW * (coarse ? 0.085 : 0.06);
+  const MW = 787, MH = 352, R = MW * (coarse ? 0.046 : 0.042); /* размер кисти: меньше = сложнее */
   const mask = document.createElement('canvas'); mask.width = MW; mask.height = MH;
   const mctx = mask.getContext('2d');
   let W = 0, H = 0, ready = false, done = false, demoRunning = false, userTouched = false, last = null;
@@ -376,7 +376,23 @@
     if (reduce || userTouched || done) return;
     demoRunning = true; stage.classList.add('demo'); last = null;
     const t0 = performance.now(), dur = 1800;
-    const end = () => { demoRunning = false; last = null; stage.classList.remove('demo'); measure(); };
+    const end = () => {
+      demoRunning = false; last = null; stage.classList.remove('demo');
+      if (userTouched) { measure(); return; }
+      /* the demo stripe is only a hint: let the dirt come back so it does not count toward the discount */
+      setTimeout(() => {
+        let n = 0;
+        const fade = () => {
+          if (userTouched || done) { measure(); return; }
+          mctx.globalCompositeOperation = 'destination-out';
+          mctx.fillStyle = 'rgba(0,0,0,.14)'; mctx.fillRect(0, 0, MW, MH);
+          mctx.globalCompositeOperation = 'source-over';
+          render();
+          if (++n < 28) requestAnimationFrame(fade); else { mctx.clearRect(0, 0, MW, MH); render(); setProgress(0); }
+        };
+        requestAnimationFrame(fade);
+      }, 700);
+    };
     const step = now => {
       if (userTouched) return end();
       const t = Math.min(1, (now - t0) / dur);
