@@ -193,13 +193,13 @@
       io.unobserve(e.target);
       const ba = e.target, inp = ba.querySelector('input');
       const keys = [50, 22, 78, 50], t0 = performance.now() + 300, dur = 2200;
-      let touched = false; inp.addEventListener('pointerdown', () => { touched = true; }, { once: true });
+      const touched0 = () => ba.dataset.touched === '1';
       const step = now => {
-        if (touched) return;
+        if (touched0()) return;
         const t = Math.max(0, Math.min(1, (now - t0) / dur)), seg = Math.min(2, Math.floor(t * 3)), lt = t * 3 - seg;
         const k = lt < .5 ? 2 * lt * lt : 1 - Math.pow(-2 * lt + 2, 2) / 2;
         const v = keys[seg] + (keys[seg + 1] - keys[seg]) * k;
-        inp.value = v; ba.style.setProperty('--pos', v + '%');
+        setBA(ba, v);
         if (t < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
@@ -207,11 +207,44 @@
     document.querySelectorAll('.ba.has-photo').forEach(b => io.observe(b));
   }
 
-  /* ---------- before / after sliders ---------- */
-  document.querySelectorAll('.ba input').forEach(inp => {
-    const ba = inp.closest('.ba');
-    const set = () => ba.style.setProperty('--pos', inp.value + '%');
-    inp.addEventListener('input', set); set();
+  /* ---------- before / after sliders: drag anywhere on the card (mouse or finger), arrows on keyboard ---------- */
+  function setBA(ba, v) {
+    v = Math.max(0, Math.min(100, v));
+    ba.style.setProperty('--pos', v + '%');
+    const inp = ba.querySelector('input'); if (inp) inp.value = v;
+    const l = ba.querySelector('.tag.l'), r = ba.querySelector('.tag.r');
+    if (l) l.style.opacity = v < 18 ? 0 : 1;
+    if (r) r.style.opacity = v > 82 ? 0 : 1;
+  }
+  document.querySelectorAll('.ba').forEach(ba => {
+    const inp = ba.querySelector('input');
+    const fromEvent = e => { const r = ba.getBoundingClientRect(); setBA(ba, (e.clientX - r.left) / r.width * 100); };
+    let drag = false, startX = 0, startY = 0, decided = false;
+    ba.addEventListener('pointerdown', e => {
+      if (e.button > 0) return;
+      ba.dataset.touched = '1';
+      drag = true; decided = e.pointerType === 'mouse'; startX = e.clientX; startY = e.clientY;
+      if (decided) { ba.classList.add('dragging'); fromEvent(e); }
+      try { ba.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    ba.addEventListener('pointermove', e => {
+      if (!drag) return;
+      if (!decided) {
+        const dx = Math.abs(e.clientX - startX), dy = Math.abs(e.clientY - startY);
+        if (dx < 6 && dy < 6) return;
+        if (dy > dx) { drag = false; return; }
+        decided = true; ba.classList.add('dragging');
+      }
+      fromEvent(e);
+    });
+    const stop = e => {
+      if (drag && !decided && e && e.type === 'pointerup') fromEvent(e); /* a tap moves the divider there */
+      drag = false; ba.classList.remove('dragging');
+    };
+    ba.addEventListener('pointerup', stop);
+    ba.addEventListener('pointercancel', () => { drag = false; ba.classList.remove('dragging'); });
+    if (inp) inp.addEventListener('input', () => { ba.dataset.touched = '1'; setBA(ba, +inp.value); });
+    setBA(ba, inp ? +inp.value : 50);
   });
 
   /* ---------- wireframe mesh ---------- */
